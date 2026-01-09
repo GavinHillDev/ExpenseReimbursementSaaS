@@ -1,6 +1,0 @@
-@ExpenseReimbursmentSaaS_HostAddress = http://localhost:5084
-
-GET {{ExpenseReimbursmentSaaS_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
