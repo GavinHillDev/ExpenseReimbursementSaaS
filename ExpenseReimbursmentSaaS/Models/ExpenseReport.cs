@@ -14,7 +14,7 @@
 
         public string? financeCommnet { get; set; }
 
-
+        public ICollection<ExpenseItem>? ExpenseItems { get; set; }
 
     }
 }

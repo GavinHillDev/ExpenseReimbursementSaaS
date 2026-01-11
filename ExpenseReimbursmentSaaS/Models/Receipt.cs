@@ -12,6 +12,6 @@
 
         public string ContentType { get; set; }
 
-        public DateOnly UploadeDate { get; set; }
+        public DateOnly UploadDate { get; set; }
     }
 }
