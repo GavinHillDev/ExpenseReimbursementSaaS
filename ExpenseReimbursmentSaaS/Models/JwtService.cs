@@ -17,7 +17,8 @@ namespace ExpenseReimbursmentSaaS.Models
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, employee.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, employee.Email)
+                new Claim(JwtRegisteredClaimNames.Email, employee.Email),
+                new Claim(ClaimTypes.Role, employee.Role)
             };
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

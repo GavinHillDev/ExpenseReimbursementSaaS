@@ -1,12 +1,14 @@
-﻿using System;
+﻿using ExpenseReimbursmentSaaS.Data;
+using ExpenseReimbursmentSaaS.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ExpenseReimbursmentSaaS.Data;
-using ExpenseReimbursmentSaaS.Models;
 
 namespace ExpenseReimbursmentSaaS.Controllers
 {
@@ -15,10 +17,13 @@ namespace ExpenseReimbursmentSaaS.Controllers
     public class EmployeesController : ControllerBase
     {
         private readonly ExpenseReimbursmentSaaSContext _context;
-
-        public EmployeesController(ExpenseReimbursmentSaaSContext context)
+        private readonly JwtService _jwtService;
+        private readonly IPasswordHasher<Employee> _passwordHasher;
+        public EmployeesController(ExpenseReimbursmentSaaSContext context, JwtService jwtService)
         {
             _context = context;
+            _jwtService = jwtService;
+            _passwordHasher = new PasswordHasher<Employee>();
         }
 
         // GET: api/Employees
@@ -76,6 +81,7 @@ namespace ExpenseReimbursmentSaaS.Controllers
         // POST: api/Employees
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
         {
             _context.Employee.Add(employee);
