@@ -12,7 +12,7 @@
 
         public string? managerComment { get; set; }
 
-        public string? financeCommnet { get; set; }
+        public string? financeComment { get; set; }
 
         public ICollection<ExpenseItem>? ExpenseItems { get; set; }
 

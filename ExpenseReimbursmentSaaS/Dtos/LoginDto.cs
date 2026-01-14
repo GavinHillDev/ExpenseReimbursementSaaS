@@ -1,6 +1,8 @@
 ﻿namespace ExpenseReimbursmentSaaS.Dtos
 {
-    public class EmployeeDto
+    public class LoginDto
     {
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 }

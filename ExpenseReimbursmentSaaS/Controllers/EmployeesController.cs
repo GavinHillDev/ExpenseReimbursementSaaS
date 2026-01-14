@@ -1,4 +1,5 @@
 ﻿using ExpenseReimbursmentSaaS.Data;
+using ExpenseReimbursmentSaaS.Dtos;
 using ExpenseReimbursmentSaaS.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace ExpenseReimbursmentSaaS.Controllers
@@ -82,10 +84,10 @@ namespace ExpenseReimbursmentSaaS.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
+        public async Task<ActionResult<Employee>> PostEmployee([FromBody] RegisterDto register)
         {
-            _context.Employee.Add(employee);
-            await _context.SaveChangesAsync();
+ 
+            //Create Employee and define their role
 
             return CreatedAtAction("GetEmployee", new { id = employee.Id }, employee);
         }
