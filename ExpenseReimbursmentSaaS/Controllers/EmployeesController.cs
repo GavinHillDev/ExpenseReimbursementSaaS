@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace ExpenseReimbursmentSaaS.Controllers
@@ -80,17 +81,96 @@ namespace ExpenseReimbursmentSaaS.Controllers
             return NoContent();
         }
 
-        // POST: api/Employees
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Employee>> PostEmployee([FromBody] RegisterDto register)
-        {
- 
-            //Create Employee and define their role
 
-            return CreatedAtAction("GetEmployee", new { id = employee.Id }, employee);
+        //LOGIN ENDPOINT
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto login)
+        {
+            var employee = await _context.Employee.FirstOrDefaultAsync(e => e.Email == login.Email);
+            if (employee == null)
+            {
+                return Unauthorized(new { message = "Not Found" });
+            }
+            var result = _passwordHasher.VerifyHashedPassword(employee, employee.PasswordHash, login.Password);
+            if (result == PasswordVerificationResult.Failed)
+            {
+                Console.WriteLine(employee.PasswordHash);
+                Console.WriteLine(_passwordHasher.HashPassword(null,login.Password));
+                Console.WriteLine("Failed Password");
+                return Unauthorized(new { message = "Invalid Credentials" });
+            }
+            var token = _jwtService.GenerateToken(employee);
+            return Ok(new { token });
         }
+
+
+        // POST: api/Employees/Register
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost("registeremployee")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> Register([FromBody] RegisterDto register)
+        {
+
+            //Create Employee and define their role
+            var employee = new Employee
+            {
+                Email = register.Email,
+                Name = register.Name,
+                PasswordHash = _passwordHasher.HashPassword(null, register.Password),
+                Role = Roles.Employee
+
+            };
+            
+            employee.EmployeeId = employee.Id;
+            _context.Employee.Add(employee);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Employee registered successfully" });
+        }
+        [HttpPost("registeradmin")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterDto register)
+        {
+
+            //Create Employee and define their role
+            var employee = new Employee
+            {
+                Email = register.Email,
+                Name = register.Name,
+                PasswordHash = _passwordHasher.HashPassword(null, register.Password),
+                Role = Roles.Admin
+
+            };
+
+            employee.EmployeeId = employee.Id;
+            _context.Employee.Add(employee);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Employee registered successfully" });
+        }
+        [HttpPost("registerfinance")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> RegisterFinance([FromBody] RegisterDto register)
+        {
+
+            //Create Employee and define their role
+            var employee = new Employee
+            {
+                Email = register.Email,
+                Name = register.Name,
+                PasswordHash = _passwordHasher.HashPassword(null, register.Password),
+                Role = Roles.Finance
+
+            };
+
+            employee.EmployeeId = employee.Id;
+            _context.Employee.Add(employee);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Employee registered successfully" });
+        }
+
+
 
         // DELETE: api/Employees/5
         [HttpDelete("{id}")]
