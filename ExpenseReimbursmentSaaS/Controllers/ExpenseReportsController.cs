@@ -1,12 +1,15 @@
-﻿using System;
+﻿using ExpenseReimbursmentSaaS.Data;
+using ExpenseReimbursmentSaaS.Dtos;
+using ExpenseReimbursmentSaaS.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ExpenseReimbursmentSaaS.Data;
-using ExpenseReimbursmentSaaS.Models;
 
 namespace ExpenseReimbursmentSaaS.Controllers
 {
@@ -15,10 +18,12 @@ namespace ExpenseReimbursmentSaaS.Controllers
     public class ExpenseReportsController : ControllerBase
     {
         private readonly ExpenseReimbursmentSaaSContext _context;
-
-        public ExpenseReportsController(ExpenseReimbursmentSaaSContext context)
+        private readonly JwtService _jwtService;
+        
+        public ExpenseReportsController(ExpenseReimbursmentSaaSContext context, JwtService jwtService)
         {
             _context = context;
+            _jwtService = jwtService;
         }
 
         // GET: api/ExpenseReports
@@ -72,10 +77,29 @@ namespace ExpenseReimbursmentSaaS.Controllers
 
             return NoContent();
         }
-
-        // POST: api/ExpenseReports
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //Create Expense Report
         [HttpPost]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> CreateReport([FromBody] RegisterDto register)
+        {
+            var context = _context.ExpenseReport;
+            //User is the uploader
+            //Date is upload Date
+            //Use ID to upload Expense Items
+            //Status = Pending
+            
+            var expenseReport = new ExpenseReport()
+            {
+             //TODO
+             //New Migrations
+            };
+
+            return Ok(new { message = "Report registered successfully" });
+        }
+
+            // POST: api/ExpenseReports
+            // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+            [HttpPost]
         public async Task<ActionResult<ExpenseReport>> PostExpenseReport(ExpenseReport expenseReport)
         {
             _context.ExpenseReport.Add(expenseReport);

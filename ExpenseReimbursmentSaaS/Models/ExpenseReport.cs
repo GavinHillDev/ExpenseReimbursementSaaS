@@ -16,5 +16,7 @@
 
         public ICollection<ExpenseItem>? ExpenseItems { get; set; }
 
+        public string Uploader { get; set; }
+
     }
 }
