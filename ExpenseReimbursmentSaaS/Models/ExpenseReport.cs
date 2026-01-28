@@ -16,7 +16,8 @@
 
         public ICollection<ExpenseItem>? ExpenseItems { get; set; }
 
-        public string Uploader { get; set; }
+        public Employee Uploader { get; set; }
 
+        public int UploaderId { get; set; }
     }
 }

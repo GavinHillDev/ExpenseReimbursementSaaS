@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ExpenseReimbursmentSaaS.Controllers
@@ -79,27 +80,57 @@ namespace ExpenseReimbursmentSaaS.Controllers
         }
         //Create Expense Report
         [HttpPost]
+        [Authorize(AuthenticationSchemes = "Bearer")]
         [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> CreateReport([FromBody] RegisterDto register)
         {
             var context = _context.ExpenseReport;
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (id == null) return Unauthorized();
+            var user = await _context.Employee.FindAsync(int.Parse(id));
             //User is the uploader
             //Date is upload Date
             //Use ID to upload Expense Items
             //Status = Pending
-            
+
             var expenseReport = new ExpenseReport()
             {
-             //TODO
-             //New Migrations
+                Uploader = user,
+                UploaderId = user.Id,
+                UploadDate = new DateOnly(),
+                Status = ExpenseStatus.Started,
             };
 
-            return Ok(new { message = "Report registered successfully" });
+            return Ok(new { message = "Report Started" });
+        }
+        [HttpPut("id")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> AddToReport([FromBody] int id, ExpenseReport expenseReport, UpdateReportDTO UpdateReportDTO)
+        {
+            var context = _context.ExpenseReport;
+            var Employeeid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (Employeeid == null) return Unauthorized();
+            var user = await _context.Employee.FindAsync(int.Parse(Employeeid));
+
+             if (id != expenseReport.Id)
+            {
+                return BadRequest();
+            }
+
+             //Check for any reports collection, Add Report if they exist
+             //Add Receipt
+             //Change Status to submitted. 
+             
+             
+
+            return Ok(new { message = "Report Submitted" });
         }
 
-            // POST: api/ExpenseReports
-            // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-            [HttpPost]
+
+        // POST: api/ExpenseReports
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
         public async Task<ActionResult<ExpenseReport>> PostExpenseReport(ExpenseReport expenseReport)
         {
             _context.ExpenseReport.Add(expenseReport);
