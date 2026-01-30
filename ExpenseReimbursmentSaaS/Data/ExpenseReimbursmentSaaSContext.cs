@@ -18,5 +18,6 @@ namespace ExpenseReimbursmentSaaS.Data
         public DbSet<ExpenseReimbursmentSaaS.Models.ExpenseReport> ExpenseReport { get; set; } = default!;
         public DbSet<ExpenseReimbursmentSaaS.Models.ExpenseItem> ExpenseItem { get; set; } = default!;
         public DbSet<ExpenseReimbursmentSaaS.Models.Receipt> Receipt { get; set; } = default!;
+        public DbSet<ExpenseReimbursmentSaaS.Models.ExpenseCategory> ExpenseCategory { get; set; } = default!;
     }
 }

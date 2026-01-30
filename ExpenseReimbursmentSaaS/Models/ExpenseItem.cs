@@ -10,7 +10,7 @@
 
         public double Amount { get; set; }  
 
-        public string Category { get; set; } 
+        public ExpenseCategory Category { get; set; } 
 
         public DateOnly Date { get; set; }
 

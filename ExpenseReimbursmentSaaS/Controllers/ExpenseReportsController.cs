@@ -106,7 +106,7 @@ namespace ExpenseReimbursmentSaaS.Controllers
         [HttpPut("id")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> AddToReport([FromBody] int id, ExpenseReport expenseReport, UpdateReportDTO UpdateReportDTO)
+        public async Task<IActionResult> AddToReport([FromBody] int id, ExpenseReport expenseReport, string managerComment)
         {
             var context = _context.ExpenseReport;
             var Employeeid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
@@ -117,11 +117,16 @@ namespace ExpenseReimbursmentSaaS.Controllers
             {
                 return BadRequest();
             }
+            var report = await _context.ExpenseReport.FindAsync(id);
+            if (managerComment != null) { 
+                report.managerComment = managerComment;
+                report.Status = ExpenseStatus.Pending;
+            
+            }
 
-             //Check for any reports collection, Add Report if they exist
-             //Add Receipt
-             //Change Status to submitted. 
-             
+            //If Receipt exists or ExpenseReport exists manager comment or finance
+            //commnet. Add Expense Item and Receipt in individual controller instead of adding here
+            //Update this to be a comment
              
 
             return Ok(new { message = "Report Submitted" });
