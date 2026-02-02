@@ -81,7 +81,7 @@ namespace ExpenseReimbursmentSaaS.Controllers
         //Create Expense Report
         [HttpPost]
         [Authorize(AuthenticationSchemes = "Bearer")]
-        [Authorize(Roles = Roles.Admin)]
+        [Authorize(Roles = Roles.Employee)]
         public async Task<IActionResult> CreateReport([FromBody] RegisterDto register)
         {
             var context = _context.ExpenseReport;
@@ -103,10 +103,13 @@ namespace ExpenseReimbursmentSaaS.Controllers
 
             return Ok(new { message = "Report Started" });
         }
+
+        //Manager and Finance get approval request, if revision is needed it will 
+        //Go back to the employee
         [HttpPut("id")]
         [Authorize(AuthenticationSchemes = "Bearer")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> AddToReport([FromBody] int id, ExpenseReport expenseReport, string managerComment)
+        [Authorize(Roles = Roles.Manager)]
+        public async Task<IActionResult> ManagerApproval([FromBody] int id, ExpenseReport expenseReport, string managerComment, bool revisionNeeded)
         {
             var context = _context.ExpenseReport;
             var Employeeid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
@@ -118,20 +121,45 @@ namespace ExpenseReimbursmentSaaS.Controllers
                 return BadRequest();
             }
             var report = await _context.ExpenseReport.FindAsync(id);
-            if (managerComment != null) { 
+            if (managerComment != null) {
+                if (revisionNeeded)
+                {
+                    report.managerComment = managerComment;
+                    report.Status = ExpenseStatus.RevisionNeeded;
+                }
                 report.managerComment = managerComment;
-                report.Status = ExpenseStatus.Pending;
-            
+                report.Status = ExpenseStatus.UnderReview;
             }
-
-            //If Receipt exists or ExpenseReport exists manager comment or finance
-            //commnet. Add Expense Item and Receipt in individual controller instead of adding here
-            //Update this to be a comment
-             
 
             return Ok(new { message = "Report Submitted" });
         }
+        [HttpPut("id")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [Authorize(Roles = Roles.Finance)]
+        public async Task<IActionResult> FinanceApproval([FromBody] int id, ExpenseReport expenseReport, string financeComment, bool revisionNeeded)
+        {
+            var context = _context.ExpenseReport;
+            var Employeeid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (Employeeid == null) return Unauthorized();
+            var user = await _context.Employee.FindAsync(int.Parse(Employeeid));
 
+            if (id != expenseReport.Id)
+            {
+                return BadRequest();
+            }
+            var report = await _context.ExpenseReport.FindAsync(id);
+            if (financeComment != null)
+            {
+                if (revisionNeeded)
+                {
+                    report.financeComment = financeComment;
+                    report.Status = ExpenseStatus.RevisionNeeded;
+                }
+                report.financeComment = financeComment;
+                report.Status = ExpenseStatus.Completed;
+            }
+            return Ok(new { message = "Report Submitted" });
+        }
 
         // POST: api/ExpenseReports
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

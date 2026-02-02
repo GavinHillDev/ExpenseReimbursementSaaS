@@ -10,7 +10,7 @@ using ExpenseReimbursmentSaaS.Models;
 
 namespace ExpenseReimbursmentSaaS.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/reports{reportId}/receipts")]
     [ApiController]
     public class ReceiptsController : ControllerBase
     {

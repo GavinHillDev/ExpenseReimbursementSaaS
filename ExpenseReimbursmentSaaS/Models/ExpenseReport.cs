@@ -11,9 +11,9 @@
         public int totalAmount { get; set; }
 
         public string? managerComment { get; set; }
-
+        public int managerId { get; set; }
         public string? financeComment { get; set; }
-
+        public int FinanceId { get; set; }
         public ICollection<ExpenseItem>? ExpenseItems { get; set; }
 
         public Employee Uploader { get; set; }
