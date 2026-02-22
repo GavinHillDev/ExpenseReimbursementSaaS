@@ -115,7 +115,15 @@ namespace ExpenseReimbursmentSaaS
                         Name = "admin",
                         PasswordHash = passwordHasher.HashPassword(null, "123")
                     };
+                    //var employee = new Employee
+                    //{
+                    //    Role = Roles.Admin,
+                    //    Email = "employee4@test.com",
+                    //    Name = "employee",
+                    //    PasswordHash = passwordHasher.HashPassword(null, "111")
+                    //};
                     context.Employee.Add(admin);
+                   // context.Employee.Add(employee);
                     context.SaveChanges();
                     Console.WriteLine("Added Admin");
                 }

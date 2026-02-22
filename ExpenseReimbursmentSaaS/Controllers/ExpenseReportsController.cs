@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -27,18 +28,22 @@ namespace ExpenseReimbursmentSaaS.Controllers
             _jwtService = jwtService;
         }
 
-        // GET: api/ExpenseReports
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ExpenseReport>>> GetExpenseReport()
-        {
-            return await _context.ExpenseReport.ToListAsync();
-        }
+        //// GET: api/ExpenseReports
+        //[HttpGet]
+        //public async Task<ActionResult<IEnumerable<ExpenseReport>>> GetExpenseReport()
+        //{
+        //    return await _context.ExpenseReport.ToListAsync();
+        //}
 
         // GET: api/ExpenseReports/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ExpenseReport>> GetExpenseReport(int id)
         {
-            var expenseReport = await _context.ExpenseReport.FindAsync(id);
+            var expenseReport = await _context.ExpenseReport
+                //.FindAsync(id);
+            .Include(r => r.ExpenseReceipts)
+            .Include(r => r.ExpenseItems)
+            .FirstOrDefaultAsync(r => r.Id == id);
 
             if (expenseReport == null)
             {
@@ -47,6 +52,9 @@ namespace ExpenseReimbursmentSaaS.Controllers
 
             return expenseReport;
         }
+
+ 
+
 
         // PUT: api/ExpenseReports/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -79,10 +87,10 @@ namespace ExpenseReimbursmentSaaS.Controllers
             return NoContent();
         }
         //Create Expense Report
-        [HttpPost]
+        [HttpPost("createReport")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         [Authorize(Roles = Roles.Employee)]
-        public async Task<IActionResult> CreateReport([FromBody] RegisterDto register)
+        public async Task<IActionResult> CreateReport([FromBody] ExpenseReportDto report)
         {
             var context = _context.ExpenseReport;
             var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
@@ -92,16 +100,17 @@ namespace ExpenseReimbursmentSaaS.Controllers
             //Date is upload Date
             //Use ID to upload Expense Items
             //Status = Pending
-
+            //Employee puts in totalAmount of items
             var expenseReport = new ExpenseReport()
             {
-                Uploader = user,
                 UploaderId = user.Id,
                 UploadDate = new DateOnly(),
                 Status = ExpenseStatus.Started,
+                totalAmount = report.totalAmount
             };
-
-            return Ok(new { message = "Report Started" });
+            _context.ExpenseReport.Add(expenseReport);
+            _context.SaveChangesAsync();
+            return Ok(new { message = expenseReport.Id, expenseReport});
         }
 
         //Manager and Finance get approval request, if revision is needed it will 
@@ -109,18 +118,19 @@ namespace ExpenseReimbursmentSaaS.Controllers
         [HttpPut("id")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         [Authorize(Roles = Roles.Manager)]
-        public async Task<IActionResult> ManagerApproval([FromBody] int id, ExpenseReport expenseReport, string managerComment, bool revisionNeeded)
+        public async Task<IActionResult> ManagerApproval([FromBody] int id, string managerComment, bool revisionNeeded)
         {
             var context = _context.ExpenseReport;
             var Employeeid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
             if (Employeeid == null) return Unauthorized();
             var user = await _context.Employee.FindAsync(int.Parse(Employeeid));
+ 
+            var report = await _context.ExpenseReport.FindAsync(id);
 
-             if (id != expenseReport.Id)
+            if (report == null)
             {
                 return BadRequest();
             }
-            var report = await _context.ExpenseReport.FindAsync(id);
             if (managerComment != null) {
                 if (revisionNeeded)
                 {
@@ -131,23 +141,24 @@ namespace ExpenseReimbursmentSaaS.Controllers
                 report.Status = ExpenseStatus.UnderReview;
             }
 
-            return Ok(new { message = "Report Submitted" });
+            return Ok(new { message = "Report Needs Revised" });
         }
         [HttpPut("id")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         [Authorize(Roles = Roles.Finance)]
-        public async Task<IActionResult> FinanceApproval([FromBody] int id, ExpenseReport expenseReport, string financeComment, bool revisionNeeded)
+        public async Task<IActionResult> FinanceApproval([FromBody] int id, string financeComment, bool revisionNeeded)
         {
             var context = _context.ExpenseReport;
             var Employeeid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
             if (Employeeid == null) return Unauthorized();
             var user = await _context.Employee.FindAsync(int.Parse(Employeeid));
 
-            if (id != expenseReport.Id)
+            var report = await _context.ExpenseReport.FindAsync(id);
+
+            if (report == null)
             {
                 return BadRequest();
             }
-            var report = await _context.ExpenseReport.FindAsync(id);
             if (financeComment != null)
             {
                 if (revisionNeeded)
@@ -163,15 +174,22 @@ namespace ExpenseReimbursmentSaaS.Controllers
 
         // POST: api/ExpenseReports
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<ExpenseReport>> PostExpenseReport(ExpenseReport expenseReport)
-        {
-            _context.ExpenseReport.Add(expenseReport);
-            await _context.SaveChangesAsync();
+        //[HttpPost]
+        //public async Task<ActionResult<ExpenseReport>> PostExpenseReport(ExpenseReport expenseReport)
+        //{
+        //    _context.ExpenseReport.Add(expenseReport);
+        //    await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetExpenseReport", new { id = expenseReport.Id }, expenseReport);
-        }
-
+        //    return CreatedAtAction("GetExpenseReport", new { id = expenseReport.Id }, expenseReport);
+        //}
+        //[HttpGet("id")]
+        //public async Task<IActionResult> GetReport(int id)
+        //{
+        
+            
+        
+        
+        //}
         // DELETE: api/ExpenseReports/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExpenseReport(int id)

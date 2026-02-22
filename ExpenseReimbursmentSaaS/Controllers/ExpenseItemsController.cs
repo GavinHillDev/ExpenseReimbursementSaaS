@@ -1,25 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using ExpenseReimbursmentSaaS.Data;
+using ExpenseReimbursmentSaaS.Dtos;
+using ExpenseReimbursmentSaaS.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ExpenseReimbursmentSaaS.Data;
-using ExpenseReimbursmentSaaS.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace ExpenseReimbursmentSaaS.Controllers
 {
     //[Route("api/[controller]")]
-    [Route("api/reports{reportId}/items")]
+    [Route("api/reports/{reportId}/items")]
     [ApiController]
     public class ExpenseItemsController : ControllerBase
     {
         private readonly ExpenseReimbursmentSaaSContext _context;
+        private readonly JwtService _jwtService;
 
-        public ExpenseItemsController(ExpenseReimbursmentSaaSContext context)
+        public ExpenseItemsController(ExpenseReimbursmentSaaSContext context, JwtService jwtService)
         {
             _context = context;
+            _jwtService = jwtService;
         }
 
         // GET: api/ExpenseItems
@@ -76,15 +81,43 @@ namespace ExpenseReimbursmentSaaS.Controllers
 
         // POST: api/ExpenseItems
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<ExpenseItem>> PostExpenseItem(ExpenseItem expenseItem)
+        //[HttpPost]
+        //public async Task<ActionResult<ExpenseItem>> PostExpenseItem(ExpenseItem expenseItem)
+        //{
+        //    _context.ExpenseItem.Add(expenseItem);
+        //    await _context.SaveChangesAsync();
+
+        //    return CreatedAtAction("GetExpenseItem", new { id = expenseItem.Id }, expenseItem);
+        //}
+        [HttpPost("add")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [Authorize(Roles = Roles.Employee)]
+        public async Task<IActionResult> AddReportItem([FromRoute] int reportId, [FromBody] ReportItemDTO item)
         {
-            _context.ExpenseItem.Add(expenseItem);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetExpenseItem", new { id = expenseItem.Id }, expenseItem);
+            var context = _context.ExpenseReport;
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (id == null) return Unauthorized();
+            var user = await _context.Employee.FindAsync(int.Parse(id));
+
+           
+
+            var newitem = new ExpenseItem()
+            {
+                UploaderId = user.Id,
+                UploadDate = new DateOnly(),
+                ExpenseReportId = reportId,
+                Category = item.Category,
+                Description = item.Description,
+                Amount = item.itemAmount
+            };
+            var report = await _context.ExpenseReport.FirstOrDefaultAsync(r => r.Id == reportId);
+            _context.ExpenseItem.Add(newitem);
+            _context.SaveChangesAsync();
+            //report.ExpenseReceipts.Add(newreceipt);
+
+            return Ok(new { message = report });
         }
-
         // DELETE: api/ExpenseItems/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExpenseItem(int id)

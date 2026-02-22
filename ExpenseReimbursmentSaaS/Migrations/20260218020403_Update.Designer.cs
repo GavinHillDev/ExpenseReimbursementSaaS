@@ -4,6 +4,7 @@ using ExpenseReimbursmentSaaS.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ExpenseReimbursmentSaaS.Migrations
 {
     [DbContext(typeof(ExpenseReimbursmentSaaSContext))]
-    partial class ExpenseReimbursmentSaaSContextModelSnapshot : ModelSnapshot
+    [Migration("20260218020403_Update")]
+    partial class Update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,17 +89,14 @@ namespace ExpenseReimbursmentSaaS.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ExpenseReportId")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("UploadDate")
-                        .HasColumnType("date");
-
-                    b.Property<int>("UploaderId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -170,34 +170,23 @@ namespace ExpenseReimbursmentSaaS.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExpenseReportId");
-
                     b.ToTable("Receipt");
                 });
 
             modelBuilder.Entity("ExpenseReimbursmentSaaS.Models.ExpenseItem", b =>
                 {
-                    b.HasOne("ExpenseReimbursmentSaaS.Models.ExpenseReport", null)
+                    b.HasOne("ExpenseReimbursmentSaaS.Models.ExpenseReport", "expenseReport")
                         .WithMany("ExpenseItems")
                         .HasForeignKey("ExpenseReportId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
 
-            modelBuilder.Entity("ExpenseReimbursmentSaaS.Models.Receipt", b =>
-                {
-                    b.HasOne("ExpenseReimbursmentSaaS.Models.ExpenseReport", null)
-                        .WithMany("ExpenseReceipts")
-                        .HasForeignKey("ExpenseReportId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("expenseReport");
                 });
 
             modelBuilder.Entity("ExpenseReimbursmentSaaS.Models.ExpenseReport", b =>
                 {
                     b.Navigation("ExpenseItems");
-
-                    b.Navigation("ExpenseReceipts");
                 });
 #pragma warning restore 612, 618
         }

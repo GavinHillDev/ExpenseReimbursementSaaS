@@ -4,6 +4,7 @@ using ExpenseReimbursmentSaaS.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ExpenseReimbursmentSaaS.Migrations
 {
     [DbContext(typeof(ExpenseReimbursmentSaaSContext))]
-    partial class ExpenseReimbursmentSaaSContextModelSnapshot : ModelSnapshot
+    [Migration("20260218012136_Changes")]
+    partial class Changes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,17 +89,14 @@ namespace ExpenseReimbursmentSaaS.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ExpenseReportId")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("UploadDate")
-                        .HasColumnType("date");
-
-                    b.Property<int>("UploaderId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -114,7 +114,7 @@ namespace ExpenseReimbursmentSaaS.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("FinanceId")
+                    b.Property<int>("FinanceId")
                         .HasColumnType("int");
 
                     b.Property<string>("Status")
@@ -133,13 +133,15 @@ namespace ExpenseReimbursmentSaaS.Migrations
                     b.Property<string>("managerComment")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("managerId")
+                    b.Property<int>("managerId")
                         .HasColumnType("int");
 
                     b.Property<int>("totalAmount")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UploaderId");
 
                     b.ToTable("ExpenseReport");
                 });
@@ -156,7 +158,7 @@ namespace ExpenseReimbursmentSaaS.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ExpenseReportId")
+                    b.Property<int>("ExpentReportId")
                         .HasColumnType("int");
 
                     b.Property<string>("FilePath")
@@ -170,34 +172,34 @@ namespace ExpenseReimbursmentSaaS.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExpenseReportId");
-
                     b.ToTable("Receipt");
                 });
 
             modelBuilder.Entity("ExpenseReimbursmentSaaS.Models.ExpenseItem", b =>
                 {
-                    b.HasOne("ExpenseReimbursmentSaaS.Models.ExpenseReport", null)
+                    b.HasOne("ExpenseReimbursmentSaaS.Models.ExpenseReport", "expenseReport")
                         .WithMany("ExpenseItems")
                         .HasForeignKey("ExpenseReportId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("expenseReport");
                 });
 
-            modelBuilder.Entity("ExpenseReimbursmentSaaS.Models.Receipt", b =>
+            modelBuilder.Entity("ExpenseReimbursmentSaaS.Models.ExpenseReport", b =>
                 {
-                    b.HasOne("ExpenseReimbursmentSaaS.Models.ExpenseReport", null)
-                        .WithMany("ExpenseReceipts")
-                        .HasForeignKey("ExpenseReportId")
+                    b.HasOne("ExpenseReimbursmentSaaS.Models.Employee", "Uploader")
+                        .WithMany()
+                        .HasForeignKey("UploaderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Uploader");
                 });
 
             modelBuilder.Entity("ExpenseReimbursmentSaaS.Models.ExpenseReport", b =>
                 {
                     b.Navigation("ExpenseItems");
-
-                    b.Navigation("ExpenseReceipts");
                 });
 #pragma warning restore 612, 618
         }
