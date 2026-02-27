@@ -82,7 +82,7 @@ namespace ExpenseReimbursmentSaaS.Controllers
 
         [HttpPost("addReceipt")]
         [Authorize(AuthenticationSchemes = "Bearer")]
-        [Authorize(Roles = Roles.Employee)]
+        [Authorize(Roles = Roles.Employee + "," + Roles.Admin + "," + Roles.Manager + "," + Roles.Finance)]
         public async Task<IActionResult> AddReceipt([FromRoute] int reportId, [FromForm] ReceiptUploadDTO receipt)
         {
 
@@ -90,7 +90,6 @@ namespace ExpenseReimbursmentSaaS.Controllers
             var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
             if (id == null) return Unauthorized();
             var user = await _context.Employee.FindAsync(int.Parse(id));
-            //var parentReport = await _context.ExpenseReport.FindAsync(reportId);
 
             if (receipt.ReceiptFile == null || receipt.ReceiptFile.Length == 0)
             {
@@ -117,7 +116,7 @@ namespace ExpenseReimbursmentSaaS.Controllers
             var newreceipt = new Receipt()
             {
                 UploaderId = user.Id,
-                UploadDate = new DateOnly(),
+                UploadDate = DateOnly.FromDateTime(DateTime.Now),
                 ExpenseReportId = reportId,   
                 FilePath = relativePath,
                 Category = receipt.Category,
@@ -125,16 +124,12 @@ namespace ExpenseReimbursmentSaaS.Controllers
             var report = await _context.ExpenseReport.FirstOrDefaultAsync(r => r.Id == reportId);
             _context.Receipt.Add(newreceipt);
             _context.SaveChangesAsync();
-            //report.ExpenseReceipts.Add(newreceipt);
+            
 
             return Ok(new { message = report });
         }
 
-        //User Adds Receipt to existing report - Optional
-        //User adds Report Item to existing report
-        //Manager Comments on Report > Can mark that a follow up is needed
-        //Once Manager Approves it will go to finance and they can comment or say follow up is needed
-
+         
         // DELETE: api/Receipts/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteReceipt(int id)

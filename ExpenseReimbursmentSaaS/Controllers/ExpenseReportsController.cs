@@ -28,14 +28,6 @@ namespace ExpenseReimbursmentSaaS.Controllers
             _jwtService = jwtService;
         }
 
-        //// GET: api/ExpenseReports
-        //[HttpGet]
-        //public async Task<ActionResult<IEnumerable<ExpenseReport>>> GetExpenseReport()
-        //{
-        //    return await _context.ExpenseReport.ToListAsync();
-        //}
-
-        // GET: api/ExpenseReports/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ExpenseReport>> GetExpenseReport(int id)
         {
@@ -56,55 +48,22 @@ namespace ExpenseReimbursmentSaaS.Controllers
  
 
 
-        // PUT: api/ExpenseReports/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutExpenseReport(int id, ExpenseReport expenseReport)
-        {
-            if (id != expenseReport.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(expenseReport).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ExpenseReportExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
+       
         //Create Expense Report
         [HttpPost("createReport")]
         [Authorize(AuthenticationSchemes = "Bearer")]
-        [Authorize(Roles = Roles.Employee)]
+        [Authorize(Roles = Roles.Employee + "," + Roles.Admin + "," + Roles.Manager + "," + Roles.Finance)]
         public async Task<IActionResult> CreateReport([FromBody] ExpenseReportDto report)
         {
             var context = _context.ExpenseReport;
             var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
             if (id == null) return Unauthorized();
             var user = await _context.Employee.FindAsync(int.Parse(id));
-            //User is the uploader
-            //Date is upload Date
-            //Use ID to upload Expense Items
-            //Status = Pending
-            //Employee puts in totalAmount of items
+ 
             var expenseReport = new ExpenseReport()
             {
                 UploaderId = user.Id,
-                UploadDate = new DateOnly(),
+                UploadDate = DateOnly.FromDateTime(DateTime.Now),
                 Status = ExpenseStatus.Started,
                 totalAmount = report.totalAmount
             };
@@ -115,10 +74,10 @@ namespace ExpenseReimbursmentSaaS.Controllers
 
         //Manager and Finance get approval request, if revision is needed it will 
         //Go back to the employee
-        [HttpPut("id")]
+        [HttpPut("managerapproval/{id}")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         [Authorize(Roles = Roles.Manager)]
-        public async Task<IActionResult> ManagerApproval([FromBody] int id, string managerComment, bool revisionNeeded)
+        public async Task<IActionResult> ManagerApproval(int id, [FromBody] ManagerApprovalDTO approvalDTO)
         {
             var context = _context.ExpenseReport;
             var Employeeid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
@@ -129,24 +88,27 @@ namespace ExpenseReimbursmentSaaS.Controllers
 
             if (report == null)
             {
-                return BadRequest();
+                return BadRequest(new { message = report });
             }
-            if (managerComment != null) {
-                if (revisionNeeded)
+            if (approvalDTO != null) {
+                if (approvalDTO.revisionNeeded)
                 {
-                    report.managerComment = managerComment;
+                    report.managerComment = approvalDTO.managerStatement;
                     report.Status = ExpenseStatus.RevisionNeeded;
+                    report.managerId = user.Id;
+
                 }
-                report.managerComment = managerComment;
+                report.managerComment = approvalDTO.managerStatement;
                 report.Status = ExpenseStatus.UnderReview;
+                report.managerId = user.Id;
             }
 
             return Ok(new { message = "Report Needs Revised" });
         }
-        [HttpPut("id")]
+        [HttpPut("financeapproval/{id}")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         [Authorize(Roles = Roles.Finance)]
-        public async Task<IActionResult> FinanceApproval([FromBody] int id, string financeComment, bool revisionNeeded)
+        public async Task<IActionResult> FinanceApproval(int id, [FromBody] FinanceApprovalDTO approvalDTO)
         {
             var context = _context.ExpenseReport;
             var Employeeid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
@@ -154,44 +116,34 @@ namespace ExpenseReimbursmentSaaS.Controllers
             var user = await _context.Employee.FindAsync(int.Parse(Employeeid));
 
             var report = await _context.ExpenseReport.FindAsync(id);
-
             if (report == null)
             {
-                return BadRequest();
+                return BadRequest(new { message = report });
             }
-            if (financeComment != null)
+            if (approvalDTO != null)
             {
-                if (revisionNeeded)
+                if (approvalDTO.revisionNeeded)
                 {
-                    report.financeComment = financeComment;
+                    report.financeComment = approvalDTO.financeStatement;
                     report.Status = ExpenseStatus.RevisionNeeded;
+                    report.FinanceId = user.Id;
+
                 }
-                report.financeComment = financeComment;
+                report.managerComment = approvalDTO.financeStatement;
                 report.Status = ExpenseStatus.Completed;
+                report.managerId = user.Id;
             }
-            return Ok(new { message = "Report Submitted" });
+            return Ok(new { message = "Report Completed" });
         }
 
-        // POST: api/ExpenseReports
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPost]
-        //public async Task<ActionResult<ExpenseReport>> PostExpenseReport(ExpenseReport expenseReport)
-        //{
-        //    _context.ExpenseReport.Add(expenseReport);
-        //    await _context.SaveChangesAsync();
-
-        //    return CreatedAtAction("GetExpenseReport", new { id = expenseReport.Id }, expenseReport);
-        //}
-        //[HttpGet("id")]
-        //public async Task<IActionResult> GetReport(int id)
-        //{
-        
-            
+       
         
         
         //}
         // DELETE: api/ExpenseReports/5
         [HttpDelete("{id}")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> DeleteExpenseReport(int id)
         {
             var expenseReport = await _context.ExpenseReport.FindAsync(id);
@@ -206,9 +158,6 @@ namespace ExpenseReimbursmentSaaS.Controllers
             return NoContent();
         }
 
-        private bool ExpenseReportExists(int id)
-        {
-            return _context.ExpenseReport.Any(e => e.Id == id);
-        }
+       
     }
 }

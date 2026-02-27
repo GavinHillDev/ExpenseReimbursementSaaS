@@ -79,19 +79,10 @@ namespace ExpenseReimbursmentSaaS.Controllers
             return NoContent();
         }
 
-        // POST: api/ExpenseItems
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPost]
-        //public async Task<ActionResult<ExpenseItem>> PostExpenseItem(ExpenseItem expenseItem)
-        //{
-        //    _context.ExpenseItem.Add(expenseItem);
-        //    await _context.SaveChangesAsync();
 
-        //    return CreatedAtAction("GetExpenseItem", new { id = expenseItem.Id }, expenseItem);
-        //}
         [HttpPost("add")]
         [Authorize(AuthenticationSchemes = "Bearer")]
-        [Authorize(Roles = Roles.Employee)]
+        [Authorize(Roles = Roles.Employee + "," + Roles.Admin + "," + Roles.Manager + "," + Roles.Finance)]
         public async Task<IActionResult> AddReportItem([FromRoute] int reportId, [FromBody] ReportItemDTO item)
         {
 
@@ -105,7 +96,7 @@ namespace ExpenseReimbursmentSaaS.Controllers
             var newitem = new ExpenseItem()
             {
                 UploaderId = user.Id,
-                UploadDate = new DateOnly(),
+                UploadDate = DateOnly.FromDateTime(DateTime.Now),
                 ExpenseReportId = reportId,
                 Category = item.Category,
                 Description = item.Description,
@@ -114,7 +105,6 @@ namespace ExpenseReimbursmentSaaS.Controllers
             var report = await _context.ExpenseReport.FirstOrDefaultAsync(r => r.Id == reportId);
             _context.ExpenseItem.Add(newitem);
             _context.SaveChangesAsync();
-            //report.ExpenseReceipts.Add(newreceipt);
 
             return Ok(new { message = report });
         }
