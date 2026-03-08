@@ -8,6 +8,7 @@
 
         public DateOnly ExpenseDate { get; set; }
 
+        public DateOnly PurchaseDate { get; set; }
         public string Description { get; set; }
     }
 }

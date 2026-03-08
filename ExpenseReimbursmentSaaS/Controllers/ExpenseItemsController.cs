@@ -2,14 +2,9 @@
 using ExpenseReimbursmentSaaS.Dtos;
 using ExpenseReimbursmentSaaS.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace ExpenseReimbursmentSaaS.Controllers
 {
@@ -27,12 +22,6 @@ namespace ExpenseReimbursmentSaaS.Controllers
             _jwtService = jwtService;
         }
 
-        // GET: api/ExpenseItems
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ExpenseItem>>> GetExpenseItem()
-        {
-            return await _context.ExpenseItem.ToListAsync();
-        }
 
         // GET: api/ExpenseItems/5
         [HttpGet("{id}")]
@@ -46,37 +35,6 @@ namespace ExpenseReimbursmentSaaS.Controllers
             }
 
             return expenseItem;
-        }
-
-        // PUT: api/ExpenseItems/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutExpenseItem(int id, ExpenseItem expenseItem)
-        {
-            if (id != expenseItem.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(expenseItem).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ExpenseItemExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
         }
 
 
@@ -99,6 +57,7 @@ namespace ExpenseReimbursmentSaaS.Controllers
                 UploadDate = DateOnly.FromDateTime(DateTime.Now),
                 ExpenseReportId = reportId,
                 Category = item.Category,
+                DateofPurchase = item.PurchaseDate,
                 Description = item.Description,
                 Amount = item.itemAmount
             };
@@ -110,6 +69,8 @@ namespace ExpenseReimbursmentSaaS.Controllers
         }
         // DELETE: api/ExpenseItems/5
         [HttpDelete("{id}")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [Authorize(Roles = Roles.Admin + "," + Roles.Manager + "," + Roles.Finance)]
         public async Task<IActionResult> DeleteExpenseItem(int id)
         {
             var expenseItem = await _context.ExpenseItem.FindAsync(id);
@@ -124,9 +85,5 @@ namespace ExpenseReimbursmentSaaS.Controllers
             return NoContent();
         }
 
-        private bool ExpenseItemExists(int id)
-        {
-            return _context.ExpenseItem.Any(e => e.Id == id);
-        }
     }
 }

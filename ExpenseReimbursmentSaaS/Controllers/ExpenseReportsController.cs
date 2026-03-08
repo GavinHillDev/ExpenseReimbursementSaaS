@@ -2,16 +2,9 @@
 using ExpenseReimbursmentSaaS.Dtos;
 using ExpenseReimbursmentSaaS.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace ExpenseReimbursmentSaaS.Controllers
 {
@@ -72,8 +65,6 @@ namespace ExpenseReimbursmentSaaS.Controllers
             return Ok(new { message = expenseReport.Id, expenseReport});
         }
 
-        //Manager and Finance get approval request, if revision is needed it will 
-        //Go back to the employee
         [HttpPut("managerapproval/{id}")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         [Authorize(Roles = Roles.Manager)]
@@ -137,13 +128,10 @@ namespace ExpenseReimbursmentSaaS.Controllers
         }
 
        
-        
-        
-        //}
-        // DELETE: api/ExpenseReports/5
+
         [HttpDelete("{id}")]
         [Authorize(AuthenticationSchemes = "Bearer")]
-        [Authorize(Roles = Roles.Admin)]
+        [Authorize(Roles = Roles.Admin + "," + Roles.Manager + "," + Roles.Finance)]
         public async Task<IActionResult> DeleteExpenseReport(int id)
         {
             var expenseReport = await _context.ExpenseReport.FindAsync(id);

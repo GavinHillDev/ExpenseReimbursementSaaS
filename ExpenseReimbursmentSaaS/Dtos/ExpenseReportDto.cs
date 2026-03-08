@@ -4,7 +4,6 @@ namespace ExpenseReimbursmentSaaS.Dtos
 {
     public class ExpenseReportDto
     {
-        //public DateOnly UploadDate { get; set; }
 
         public int totalAmount { get; set; }
 

@@ -11,9 +11,5 @@
         public required string Role { get; set; }
 
         public required string PasswordHash { get; set; }
-        // Finance, Admin, Manager, Employee
     }
 }
-//Employee Uploads Report with information including receipt. ExpenseItems refenece Report along with Receipt
-//Managers can approve or reject reports and comment/
-//Finanance can comment, and move forward with reports

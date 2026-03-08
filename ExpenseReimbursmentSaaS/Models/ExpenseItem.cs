@@ -11,6 +11,7 @@
 
         public required string Category { get; set; }
         public DateOnly UploadDate { get; set; }
+        public DateOnly DateofPurchase {  get; set; }
 
         public string Description { get; set; } 
     }

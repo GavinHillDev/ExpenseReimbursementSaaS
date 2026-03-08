@@ -48,36 +48,6 @@ namespace ExpenseReimbursmentSaaS.Controllers
             return receipt;
         }
 
-        // PUT: api/Receipts/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutReceipt(int id, Receipt receipt)
-        {
-            if (id != receipt.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(receipt).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ReceiptExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
 
 
         [HttpPost("addReceipt")]
@@ -130,8 +100,9 @@ namespace ExpenseReimbursmentSaaS.Controllers
         }
 
          
-        // DELETE: api/Receipts/5
         [HttpDelete("{id}")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [Authorize(Roles = Roles.Admin + "," + Roles.Manager + "," + Roles.Finance)]
         public async Task<IActionResult> DeleteReceipt(int id)
         {
             var receipt = await _context.Receipt.FindAsync(id);
@@ -144,11 +115,6 @@ namespace ExpenseReimbursmentSaaS.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool ReceiptExists(int id)
-        {
-            return _context.Receipt.Any(e => e.Id == id);
         }
     }
 }
